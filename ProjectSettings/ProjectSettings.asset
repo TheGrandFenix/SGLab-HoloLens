@@ -545,11 +545,12 @@ PlayerSettings:
   m_MobileRenderingPath: 1
   metroPackageName: Template_3D
   metroPackageVersion: 
-  metroCertificatePath: 
+  metroCertificatePath: C:\Users\Fran Jurinec\Documents\Programming\Unity\SGLab\HoloLens
+    Dev\SGLab-HoloLens\Assets\WSATestCertificate.pfx
   metroCertificatePassword: 
-  metroCertificateSubject: 
-  metroCertificateIssuer: 
-  metroCertificateNotAfter: 0000000000000000
+  metroCertificateSubject: DefaultCompany
+  metroCertificateIssuer: DefaultCompany
+  metroCertificateNotAfter: 00d3cf0f5cf6d501
   metroApplicationDescription: Template_3D
   wsaImages: {}
   metroTileShortName: 
@@ -568,7 +569,7 @@ PlayerSettings:
   platformCapabilities:
     WindowsStoreApps:
       HumanInterfaceDevice: False
-      InternetClient: True
+      InternetClient: False
       InternetClientServer: False
       Microphone: False
       PrivateNetworkClientServer: False
