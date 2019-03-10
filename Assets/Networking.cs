@@ -29,6 +29,18 @@ public class Networking : MonoBehaviour
         private double activePower { get; set; }
         private double reactivePower { get; set; }
         private double apparentPower { get; set; }
+        
+        public string ToString()
+        {
+            return "Machine{" +
+                    "id=" + id +
+                    ", name='" + name + '\'' +
+                    ", description='" + description + '\'' +
+                    ", activePower=" + activePower +
+                    ", reactivePower=" + reactivePower +
+                    ", apparentPower=" + apparentPower +
+                    '}';
+        }
     }
 
     void Start()
