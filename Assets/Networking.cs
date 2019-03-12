@@ -3,34 +3,29 @@ using System.Net;
 using System.IO;
 using System.Text;
 using System;
-using System.Web.Script.Serialization;
 
 public class Networking : MonoBehaviour
 {
     //premjestiti u neke globalne varijable
-    public string endpoint = "http://10.129.0.214:8080/api/sglab/machines/1";
+    public string endpoint = "http://192.168.0.18:8080/api/sglab/machines/";
     private static readonly string USERNAME = "sglabadmin";
     private static readonly string PASSWORD = "sglabadmin";
 
     float time = 5.0f;
 
+    string machineId = "1";
+
+    [Serializable]
     public class Machine
     {
-        public static readonly string ID = "id";
-        public static readonly string NAME = "name";
-        public static readonly string DESCRIPTION = "description";
-        public static readonly string ACTIVE_POWER = "activePower";
-        public static readonly string REACTIVE_POWER = "reactivePower";
-        public static readonly string APPARENT_POWER = "apparentPower";
+        public int id;
+        public string name;
+        public string description;
+        public double activePower;
+        public double reactivePower;
+        public double apparentPower;
 
-        private int id { get; set; }
-        private string name { get; set; }
-        private string description { get; set; }
-        private double activePower { get; set; }
-        private double reactivePower { get; set; }
-        private double apparentPower { get; set; }
-        
-        public string ToString()
+        public override string ToString()
         {
             return "Machine{" +
                     "id=" + id +
@@ -41,21 +36,33 @@ public class Networking : MonoBehaviour
                     ", apparentPower=" + apparentPower +
                     '}';
         }
+
+    }
+
+    [Serializable]
+    public class Command
+    {
+        public string value;
+        public object valueObj;
+
     }
 
     void Start()
     {
+        EstablishCommunication(machineId);
 
-        EstablishCommunication();
-        StartCoundownTimer();
+        Command command = new Command();
+        command.value = "value";
+        command.valueObj = true;
+        ExecuteCommand(machineId, "stop", JsonUtility.ToJson(command));
     }
 
-    void EstablishCommunication()
+    void EstablishCommunication(string id)
     {
         var plainTextBytes = Encoding.UTF8.GetBytes(USERNAME + ":" + PASSWORD);
         string encoded = Convert.ToBase64String(plainTextBytes);
 
-        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(endpoint);
+        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(endpoint + id);
 
         request.Headers.Add("Authorization", "Basic " + encoded);
         request.ContentType = "application/json";
@@ -73,9 +80,8 @@ public class Networking : MonoBehaviour
         var myStreamReader = new StreamReader(responseStream, Encoding.Default);
         var json = myStreamReader.ReadToEnd();
 
-        //add pasre JSON
-        Debug.Log(json.ToString());
         Machine machine = ParseJson(json.ToString());
+        Debug.Log(machine.ToString());
 
         responseStream.Close();
         myWebResponse.Close();
@@ -83,10 +89,7 @@ public class Networking : MonoBehaviour
 
     public Machine ParseJson(string json)
     {
-        Machine machine = new Machine();
-
-        JavaScriptSerializer jsonSerializer = new JavaScriptSerializer();
-        machine = jsonSerializer.Deserialize<Machine>(json);
+        Machine machine = JsonUtility.FromJson<Machine>(json);
 
         return machine;
     }
@@ -100,7 +103,7 @@ public class Networking : MonoBehaviour
 
         if (seconds == 0)
         {
-            EstablishCommunication();
+            EstablishCommunication(machineId);
             
             time = 6;
         }
@@ -120,10 +123,48 @@ public class Networking : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         Debug.Log("Otvaranje menija");
+
+        EstablishCommunication(machineId);
+        StartCoundownTimer();
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        Debug.Log("Komunikacija sa serverom");
     }
 
     void OnTriggerExit(Collider other)
     {
         Debug.Log("Zatvaranje menija");
+
+        CancelInvoke();
     }
+
+    //commands = {pref, start, stop}
+    void ExecuteCommand(string id, string command, string json)
+    {
+        var plainTextBytes = Encoding.UTF8.GetBytes(USERNAME + ":" + PASSWORD);
+        string encoded = Convert.ToBase64String(plainTextBytes);
+
+        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(endpoint + id + "/" + command);
+
+        request.Headers.Add("Authorization", "Basic " + encoded);
+        request.ContentType = "application/json";
+        request.Method = "POST";
+
+        using (var streamWriter = new StreamWriter(request.GetRequestStream()))
+        {
+            streamWriter.Write(json);
+            streamWriter.Flush();
+            streamWriter.Close();
+        }
+
+        var httpResponse = (HttpWebResponse)request.GetResponse();
+        using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+        {
+            var result = streamReader.ReadToEnd();
+            Debug.Log(result);
+        }
+    }
+
 }
